@@ -102,7 +102,6 @@ before_script:
 .run_when_testkitchen_triggered: &run_when_testkitchen_triggered
   only:
     - master
-    - tags
     - triggers
     - web
 
@@ -153,6 +152,12 @@ before_script:
   except:
     variables:
       - $RELEASE_VERSION_7 == ""
+
+# Do not run the pipeline when a tag is created
+.skip_on_tag: &skip_on_tag
+  except:
+    refs:
+      - tags
 
 #
 # source_test
@@ -309,6 +314,7 @@ run_dep_check_lock:
 
 # build dogstatsd static for deb-x64
 build_dogstatsd_static-deb_x64:
+  <<: *skip_on_tag
   stage: binary_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
   tags: [ "runner:main", "size:large" ]
@@ -321,6 +327,7 @@ build_dogstatsd_static-deb_x64:
 
 # build puppy agent for deb-x64, to make sure the build is not broken because of build flags
 build_puppy_agent-deb_x64:
+  <<: *skip_on_tag
   stage: binary_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
   tags: [ "runner:main", "size:large" ]
@@ -333,6 +340,7 @@ build_puppy_agent-deb_x64:
 
 # build puppy agent for ARM, to make sure the build is not broken because of build targets
 build_puppy_agent-deb_x64_arm:
+  <<: *skip_on_tag
   stage: binary_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
   tags: [ "runner:main", "size:large" ]
@@ -344,6 +352,7 @@ build_puppy_agent-deb_x64_arm:
 
 # build dogstatsd for deb-x64
 build_dogstatsd-deb_x64:
+  <<: *skip_on_tag
   stage: binary_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
   tags: [ "runner:main", "size:large" ]
@@ -356,6 +365,7 @@ build_dogstatsd-deb_x64:
 
 # build cluster-agent bin
 cluster_agent-build:
+  <<: *skip_on_tag
   stage: binary_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
   tags: [ "runner:main", "size:large" ]
@@ -397,6 +407,7 @@ cluster_agent-build:
 
 # check the size of the static dogstatsd binary
 run_dogstatsd_size_test:
+  <<: *skip_on_tag
   stage: integration_test
   needs: ["build_dogstatsd_static-deb_x64"]
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
@@ -414,6 +425,7 @@ run_dogstatsd_size_test:
 #
 #
 .agent_build_common_deb: &agent_build_common_deb
+  <<: *skip_on_tag
   script:
     - echo "About to build for $RELEASE_VERSION"
     # remove artifacts from previous pipelines that may come from the cache
@@ -514,6 +526,7 @@ agent_deb-arm-a7:
 
 # build Agent package for deb-x64
 puppy_deb-x64:
+  <<: *skip_on_tag
   stage: package_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
   tags: [ "runner:main", "size:2xlarge" ]
@@ -546,6 +559,7 @@ puppy_deb-x64:
       - $OMNIBUS_PACKAGE_DIR
 
 .agent_build_common_rpm: &agent_build_common_rpm
+  <<: *skip_on_tag
   script:
     - echo "About to build for $RELEASE_VERSION"
     # remove artifacts from previous pipelines that may come from the cache
@@ -633,6 +647,7 @@ agent_rpm-arm-a7:
 
 
 .agent_build_common_suse_rpm: &agent_build_common_suse_rpm
+  <<: *skip_on_tag
   script:
     - echo "About to build for $RELEASE_VERSION"
     # remove artifacts from previous pipelines that may come from the cache
@@ -697,6 +712,7 @@ agent_suse-x64-a7:
 ## windows dockerized builds
 ##
 .dockerbuild_windows_msi_base:
+  <<: *skip_on_tag
   stage: package_build
   tags: ["runner:windows-docker", "windowsversion:1809"]
   # Unavailable on gitlab < 12.3
@@ -751,6 +767,7 @@ dockerbuild_windows_msi_x86-a6:
 
 # build Agent package for android
 agent_android_apk:
+  <<: *skip_on_tag
   stage: package_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-builders/android_builder:$DATADOG_AGENT_BUILDERS
   tags: [ "runner:main", "size:large" ]
@@ -784,6 +801,7 @@ agent_android_apk:
 
 # build Dogstastd package for deb-x64
 dogstatsd_deb-x64:
+  <<: *skip_on_tag
   stage: package_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/deb_x64:$DATADOG_AGENT_BUILDIMAGES
   tags: [ "runner:main", "size:large" ]
@@ -816,6 +834,7 @@ dogstatsd_deb-x64:
 
 # build Dogstastd package for rpm-x64
 dogstatsd_rpm-x64:
+  <<: *skip_on_tag
   stage: package_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-buildimages/rpm_x64:$DATADOG_AGENT_BUILDIMAGES
   tags: [ "runner:main", "size:large" ]
@@ -854,6 +873,7 @@ dogstatsd_rpm-x64:
 
 # build Dogstastd package for rpm-x64
 dogstatsd_suse-x64:
+  <<: *skip_on_tag
   stage: package_build
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-builders/suse_x64:$DATADOG_AGENT_BUILDERS
   tags: [ "runner:main", "size:large" ]
@@ -1670,6 +1690,7 @@ testkitchen_cleanup_azure-a7:
 #
 
 .docker_build_job_definition: &docker_build_job_definition
+  <<: *skip_on_tag
   stage: image_build
   tags: [ "runner:docker", "size:large" ]
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker-notary:0.6.1
@@ -1797,6 +1818,7 @@ build_dogstatsd:
 #
 
 twistlock_scan-6:
+  <<: *skip_on_tag
   <<: *skip_when_unwanted_on_6
   stage: image_deploy
   tags: [ "runner:docker", "size:large" ]
@@ -1821,6 +1843,7 @@ twistlock_scan-6:
     - scan ${SRC_DCA}:${SRC_TAG}
 
 twistlock_scan-7:
+  <<: *skip_on_tag
   <<: *skip_when_unwanted_on_7
   stage: image_deploy
   tags: [ "runner:docker", "size:large" ]
@@ -1841,6 +1864,7 @@ twistlock_scan-7:
     - scan ${SRC_AGENT}:${SRC_TAG}-7-py3-jmx
 
 .docker_tag_job_definition: &docker_tag_job_definition
+  <<: *skip_on_tag
   stage: image_deploy
   tags: [ "runner:docker", "size:large" ]
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/docker-notary:0.6.1
@@ -2259,6 +2283,7 @@ deploy_puppy:
 
 # deploy process agent and system-probe to staging bucket
 deploy_process_and_sysprobe:
+  <<: *skip_on_tag
   stage: internal_deploy
   when: manual
   image: 486234852809.dkr.ecr.us-east-1.amazonaws.com/ci/datadog-agent-builders/deploy:$DATADOG_AGENT_BUILDERS
